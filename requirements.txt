@@ -1,0 +1,16 @@
+# FloodSense - Python 3.10+
+fastapi>=0.110
+uvicorn>=0.29
+numpy>=1.26
+scipy>=1.11
+requests>=2.31
+pillow>=10.0
+lightgbm>=4.0
+scikit-learn>=1.3
+pytest>=8.0
+httpx>=0.27          # for API tests (FastAPI TestClient)
+
+# optional: ONNX export (python -m ml.export_onnx)
+# onnxmltools>=1.12
+# onnx>=1.15
+# onnxruntime>=1.17

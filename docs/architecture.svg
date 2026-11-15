@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#5d6d75"/>
+    </marker>
+    <style>
+      .box{fill:#fff;stroke:#9fb1b9;stroke-width:1.3}
+      .name{font-weight:600;fill:#14232b}
+      .sub{font-size:11.5px;fill:#5d6d75}
+      .zone{fill:#f3f7f8;stroke:#c9d6db;stroke-width:1.2}
+      .ztitle{font-size:12px;font-weight:700;fill:#0b4f6c;letter-spacing:.6px}
+      .edge{fill:none;stroke:#5d6d75;stroke-width:1.4;marker-end:url(#ar)}
+      .lbl{font-size:11.5px;fill:#5d6d75}
+    </style>
+  </defs>
+  <rect width="960" height="700" fill="#ffffff"/>
+  <text x="24" y="34" font-size="18" font-weight="700" fill="#0b4f6c">FloodSense architecture</text>
+  <text x="24" y="54" class="sub">Heavy geo work happens once on the server. The phone downloads the city pack once, then predicts, routes and navigates offline.</text>
+
+  <!-- data sources -->
+  <g>
+    <rect x="24" y="76" width="210" height="58" rx="8" class="box"/>
+    <text x="38" y="100" class="name">OpenStreetMap (Overpass)</text>
+    <text x="38" y="118" class="sub">roads, shops, area names</text>
+    <rect x="250" y="76" width="210" height="58" rx="8" class="box"/>
+    <text x="264" y="100" class="name">AWS Terrain Tiles</text>
+    <text x="264" y="118" class="sub">elevation (DEM), free, no key</text>
+    <rect x="476" y="76" width="210" height="58" rx="8" class="box"/>
+    <text x="490" y="100" class="name">Open-Meteo</text>
+    <text x="490" y="118" class="sub">rain 72 h + forecast, wind</text>
+    <rect x="702" y="76" width="234" height="58" rx="8" class="box"/>
+    <text x="716" y="100" class="name">Hotspot lists (optional)</text>
+    <text x="716" y="118" class="sub">data/hotspots/*.geojson</text>
+  </g>
+  <path d="M129 134V170" class="edge"/><path d="M355 134V170" class="edge"/>
+  <path d="M581 134V170" class="edge"/><path d="M819 134V170" class="edge"/>
+
+  <!-- online zone -->
+  <rect x="24" y="170" width="912" height="176" rx="10" class="zone"/>
+  <text x="40" y="192" class="ztitle">ONLINE · PYTHON BACKEND (FastAPI, run.py)</text>
+  <rect x="40" y="206" width="430" height="122" rx="8" class="box"/>
+  <text x="54" y="230" class="name">Map-pack program  (python packs.py build …)</text>
+  <text x="54" y="252" class="sub">1. OSM in cached 3 km chunks, parallel elevation tiles</text>
+  <text x="54" y="270" class="sub">2. terrain: sink fill, D8 flow, HAND, low spots</text>
+  <text x="54" y="288" class="sub">3. ≤40 m road pieces, 12 features, islands pruned</text>
+  <text x="54" y="306" class="sub">4. 1 km tiles, names, weather → .json.gz + index</text>
+  <rect x="490" y="206" width="210" height="122" rx="8" class="box"/>
+  <text x="504" y="230" class="name">Model training (once)</text>
+  <text x="504" y="252" class="sub">ml/synth_labels.py: 10 towns ×</text>
+  <text x="504" y="270" class="sub">60 rain scenarios, physics labels</text>
+  <text x="504" y="288" class="sub">ml/train.py: LightGBM, 4 classes</text>
+  <text x="504" y="306" class="sub">→ flood_model.json (220 KB)</text>
+  <rect x="720" y="206" width="200" height="122" rx="8" class="box"/>
+  <text x="734" y="230" class="name">REST API</text>
+  <text x="734" y="252" class="sub">GET /api/catalog</text>
+  <text x="734" y="270" class="sub">GET /api/packs/{id|default}</text>
+  <text x="734" y="288" class="sub">GET /api/model (separate)</text>
+  <text x="734" y="306" class="sub">/api/weather · /api/metrics</text>
+  <path d="M490 267H476" class="edge"/>
+
+  <!-- pack -->
+  <path d="M480 346V384" class="edge"/>
+  <text x="492" y="370" class="lbl">downloaded ONCE on first start (whole city), more packs optional</text>
+  <rect x="250" y="384" width="460" height="76" rx="10" fill="#e7f1fb" stroke="#1565c0" stroke-width="2"/>
+  <text x="266" y="410" class="name" font-size="14">City Pack  (one JSON, 1 km tiles, ~3-20 MB)</text>
+  <text x="266" y="430" class="sub" fill="#14232b">roads + 12 features · street/shop/area names · hospitals</text>
+  <text x="266" y="448" class="sub" fill="#14232b">weather · on-device model (560 trees) · test metrics</text>
+  <path d="M480 460V500" class="edge"/>
+  <text x="492" y="486" class="lbl">IndexedDB (packs + saved places) · service worker (app)</text>
+
+  <!-- offline zone -->
+  <rect x="24" y="500" width="912" height="176" rx="10" class="zone"/>
+  <text x="40" y="522" class="ztitle">OFFLINE · PHONE / BROWSER (PWA, frontend/)</text>
+  <rect x="40" y="536" width="196" height="122" rx="8" class="box"/>
+  <text x="54" y="560" class="name">Rain input</text>
+  <text x="54" y="580" class="sub">cached weather, or words:</text>
+  <text x="54" y="598" class="sub">"heavy for 3 h", "12 cm",</text>
+  <text x="54" y="616" class="sub">கனமழை, "romba mazhai"</text>
+  <text x="54" y="634" class="sub">js/rain.js</text>
+  <rect x="262" y="536" width="196" height="122" rx="8" class="box"/>
+  <text x="276" y="560" class="name">Flood model</text>
+  <text x="276" y="580" class="sub">3×3 / 5×5 km around GPS</text>
+  <text x="276" y="598" class="sub">or full city; lazy for</text>
+  <text x="276" y="616" class="sub">routes (~80 ms / 3k roads)</text>
+  <text x="276" y="634" class="sub">js/model.js</text>
+  <rect x="484" y="536" width="196" height="122" rx="8" class="box"/>
+  <text x="498" y="560" class="name">Flood-aware A*</text>
+  <text x="498" y="580" class="sub">blocks roads too deep for</text>
+  <text x="498" y="598" class="sub">walking / bike / car,</text>
+  <text x="498" y="616" class="sub">penalises shallow water</text>
+  <text x="498" y="634" class="sub">js/router.js</text>
+  <rect x="706" y="536" width="214" height="122" rx="8" class="box"/>
+  <text x="720" y="560" class="name">Map + navigation</text>
+  <text x="720" y="580" class="sub">offline names, safe vs shortest</text>
+  <text x="720" y="598" class="sub">GPS arrow, turn banner,</text>
+  <text x="720" y="616" class="sub">voice, auto re-route</text>
+  <text x="720" y="634" class="sub">js/nav.js · labels.js</text>
+  <path d="M236 597H256" class="edge"/><path d="M458 597H478" class="edge"/><path d="M680 597H700" class="edge"/>
+</svg>

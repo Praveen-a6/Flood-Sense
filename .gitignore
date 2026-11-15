@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+data/cache/
+ml/data/
+models/flood_model.onnx
+data/packs/*
+!data/packs/demo-town.json
