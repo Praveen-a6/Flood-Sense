@@ -1,6 +1,7 @@
 // IndexedDB on the device:
 //   packs    full map packs (big)            meta     one small record per pack (fast listing)
 //   places   saved places                    settings model, metrics, last pack, basemap ...
+<<<<<<< HEAD
 //   chunks   cached OpenStreetMap downloads (so an interrupted city build resumes)
 //   tiles    cached elevation tiles (the same)
 // Works on the main thread and inside Web Workers (no DOM use).
@@ -11,11 +12,20 @@ const STORES = [["packs", { keyPath: "id" }], ["meta", { keyPath: "id" }], ["pla
 export const CACHE_BUDGET = { chunksBytes: 200e6, tilesBytes: 60e6, tilesCount: 800 };
 
 export function open() {
+=======
+const DB_NAME = "floodsense", VERSION = 3;
+
+function open() {
+>>>>>>> origin/main
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
+<<<<<<< HEAD
       for (const [name, opts] of STORES)
+=======
+      for (const [name, opts] of [["packs", { keyPath: "id" }], ["meta", { keyPath: "id" }], ["places", { keyPath: "id" }], ["settings", undefined]])
+>>>>>>> origin/main
         if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, opts);
     };
     req.onsuccess = () => resolve(req.result);
@@ -75,6 +85,7 @@ export async function listPlaces() {
 // settings
 export const setSetting = (k, v) => tx(["settings"], "readwrite", (t) => t.objectStore("settings").put(v, k));
 export const getSetting = (k) => tx(["settings"], "readonly", (t) => t.objectStore("settings").get(k));
+<<<<<<< HEAD
 
 // ---------------------------------------------- download cache (chunks/tiles)
 // One small record per cached download: { k, v, bytes, used }.
@@ -133,3 +144,5 @@ export async function cacheInfo() {
   }
   return out;
 }
+=======
+>>>>>>> origin/main

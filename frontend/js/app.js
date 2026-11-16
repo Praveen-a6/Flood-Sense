@@ -10,9 +10,12 @@ import { LabelLayer } from "./labels.js";
 import { buildSearchIndex, search, PLACE_ICON } from "./places.js";
 import { Navigator } from "./nav.js";
 import { renderMetrics } from "./metrics.js";
+<<<<<<< HEAD
 import { initMapsBuilder, renderCacheBox, runOnboarding } from "./citybuild.js";
 import { fetchFreshWeather } from "./cityengine.js";
 import * as mobile from "./mobile.js";
+=======
+>>>>>>> origin/main
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -24,10 +27,13 @@ const state = {
   basemap: "light", saveKind: "fav", saveTarget: null,
 };
 
+<<<<<<< HEAD
 // Android app: native geolocation + keep-awake shims, safe-area padding class
 mobile.installNativeCompat();
 if (mobile.isNative()) document.body.classList.add("native-app");
 
+=======
+>>>>>>> origin/main
 // ================================================================== map
 const map = L.map("map", { preferCanvas: true, zoomControl: false }).setView([12.98, 80.22], 14);
 L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -112,10 +118,101 @@ async function attachModel(pack) {
   pack.feature_names = pack.static_features.concat(pack.rain_features);
 }
 
+<<<<<<< HEAD
 /** First start: pick any city in India (or near your GPS) -> the browser downloads
  *  OpenStreetMap + elevation + weather for the whole city and builds the offline map. */
 function onboarding() {
   return runOnboarding();
+=======
+/** First start: build and cache a nearby map directly in the browser. */
+async function onboarding() {
+  $("onboard").hidden = false;
+  $("obChoose").hidden = false;
+  $("obRetry").hidden = true;
+  $("obStatus").textContent = "Your location is used only to fetch nearby map data and centre the offline map.";
+}
+
+async function syncFirstRunModel() {
+  const response = await fetch("/api/model", { cache: "no-store" });
+  if (!response.ok) throw new Error(`AI model unavailable (${response.status})`);
+  const model = await response.json();
+  await db.setSetting("model", model);
+  await db.setSetting("modelVersion", model.trained_at || "unknown");
+  const metrics = await fetch("/api/metrics", { cache: "no-store" });
+  if (metrics.ok) await db.setSetting("metrics", await metrics.json());
+}
+
+function buildNearbyPackInWorker(lat, lon, onProgress) {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL("./live_pack_worker.js", import.meta.url), { type: "module" });
+    worker.onmessage = ({ data }) => {
+      if (data.type === "progress") onProgress(data.message);
+      else if (data.type === "complete") { worker.terminate(); resolve(data.pack); }
+      else if (data.type === "error") { worker.terminate(); reject(new Error(data.message)); }
+    };
+    worker.onerror = (error) => { worker.terminate(); reject(new Error(error.message || "Map worker failed.")); };
+    worker.postMessage({ lat, lon });
+  });
+}
+
+async function prepareNearbyMap() {
+  if (!online()) {
+    $("obStatus").textContent = "Connect to the internet to download map data, then try again.";
+    $("obRetry").hidden = false;
+    return;
+  }
+  $("obDownload").disabled = true;
+  $("obRetry").hidden = true;
+  $("obPackName").textContent = "Nearby map";
+  $("obBar").style.width = "0%";
+  const step = (id, txt, done) => { $(id).querySelector("em").textContent = txt; $(id).classList.toggle("done", !!done); };
+  try {
+    $("obStatus").textContent = "Requesting your location…";
+    const [lat, lon] = await getGps(15000);
+    step("obStep1", "loading…");
+    let modelReady = false, modelError = null;
+    try { await syncFirstRunModel(); modelReady = true; }
+    catch (error) { modelError = error; }
+    step("obStep1", modelReady ? "✓ ready" : "physics fallback", modelReady);
+    step("obStep2", "building…");
+    const pack = await buildNearbyPackInWorker(lat, lon, (text) => {
+      $("obStatus").textContent = text;
+      const chunks = text.match(/\((\d+)\/(\d+)\)/);
+      const terrain = text.match(/\((\d+)%\)/);
+      if (text.startsWith("Downloading OpenStreetMap") && chunks)
+        $("obBar").style.width = `${5 + 25 * Number(chunks[1]) / Number(chunks[2])}%`;
+      else if (text.startsWith("Downloading elevation") && chunks)
+        $("obBar").style.width = `${30 + 20 * Number(chunks[1]) / Number(chunks[2])}%`;
+      else if (text.startsWith("Analysing terrain") && terrain)
+        $("obBar").style.width = `${50 + 40 * Number(terrain[1]) / 100}%`;
+      else if (text.startsWith("Preparing roads"))
+        $("obBar").style.width = "92%";
+    });
+    pack.model = await db.getSetting("model");
+    if (!pack.model) delete pack.model;
+    if (pack.model) pack.feature_names = pack.static_features.concat(pack.rain_features);
+    $("obStatus").textContent = "Saving the nearby map on this device…";
+    await db.savePack(pack);
+    step("obStep2", "✓ saved", true);
+    await db.setSetting("lastPack", pack.id);
+    const kept = await packs.requestPersist();
+    $("obStatus").textContent = modelError
+      ? `Map saved. The AI model could not be loaded (${modelError.message}); the built-in flood estimate will be used.`
+      : kept ? "Done. Your map is saved permanently and works offline." : "Done. FloodSense now works offline.";
+    $("obBar").style.width = "100%";
+    await new Promise((r) => setTimeout(r, modelError ? 1600 : 700));
+    $("onboard").hidden = true;
+    await start();
+  } catch (e) {
+    const message = e?.name === "QuotaExceededError"
+      ? "Not enough storage on this device. Free some space, then try again."
+      : "Could not prepare the nearby map: " + e.message;
+    $("obStatus").textContent = message;
+    $("obRetry").hidden = false;
+  } finally {
+    $("obDownload").disabled = false;
+  }
+>>>>>>> origin/main
 }
 
 async function downloadFromServer(id) {
@@ -150,7 +247,12 @@ async function renderMaps() {
       <div><b>${(p.shops || []).length.toLocaleString()}</b><span>shops & places</span></div>
       <div><b>${tl ? `${tl.nx} × ${tl.ny} km` : "–"}</b><span>area</span></div>
       <div><b>${p.pois.filter((x) => x.type === "hospital").length}</b><span>hospitals</span></div></div>
+<<<<<<< HEAD
       <p class="small muted" style="margin:8px 0 0">${p.synthetic ? "Synthetic demo terrain · " : ""}built ${(p.created_at || "").replace("T", " ")} · weather as of ${(p.data_as_of || "–").replace("T", " ")}</p>`;
+=======
+      <p class="small muted" style="margin:8px 0 0">${p.synthetic ? "Synthetic demo terrain · " : ""}built ${(p.created_at || "").replace("T", " ")} · weather as of ${(p.data_as_of || "–").replace("T", " ")}</p>
+      ${p.notes ? `<p class="small muted" style="margin:6px 0 0">${esc(p.notes)}</p>` : ""}`;
+>>>>>>> origin/main
   }
   $("deviceMaps").innerHTML = state.devicePacks.map((m) => {
     const inUse = p && m.id === p.id, upd = cmp.updates.includes(m.id), dl = state.downloading.get(m.id);
@@ -162,21 +264,31 @@ async function renderMaps() {
       ${upd && online() ? `<button data-dl="${m.id}">Update</button>` : ""}
       <button data-del="${m.id}" title="Delete from this device">✕</button></li>`;
   }).join("") || `<li class="empty">No maps on this device yet.</li>`;
+<<<<<<< HEAD
   // optional server-prepared packs (advanced); every Indian city can be built in the browser instead
   $("serverPacksCard").hidden = !state.catalog && !mobile.isNative();
+=======
+>>>>>>> origin/main
   $("serverMaps").innerHTML = state.catalog ? (cmp.available.map((s) => {
     const dl = state.downloading.get(s.id);
     return `<li><span class="ico">${s.kind === "city" ? "🏙" : "📍"}</span><span class="nm"><b>${esc(s.name)}${s.default ? ' <span class="tag use">default</span>' : ""}</b>
       <span>${s.segments.toLocaleString()} roads · ${s.shops.toLocaleString()} shops · ${s.tiles[0]}×${s.tiles[1]} km · ${packs.mb(s.gz_bytes)} download</span>
       ${dl ? `<div class="mini-bar" data-prog="${s.id}"><i style="width:${dl.f * 100}%"></i></div><span>${esc(dl.txt)}</span>` : ""}</span>
       ${dl ? "" : `<button class="go" data-dl="${s.id}">Download</button>`}</li>`;
+<<<<<<< HEAD
   }).join("") || `<li class="empty">You have every map the server offers.</li>`) : "";
+=======
+  }).join("") || `<li class="empty">You have every map the server offers.</li>`) : `<li class="empty">Loading the server's map list…</li>`;
+>>>>>>> origin/main
   const st = await packs.storageInfo();
   $("storageBox").innerHTML = `${packs.mb(st.used)} used${st.quota ? ` of ${packs.mb(st.quota)} available to FloodSense` : ""}
     <div class="mini-bar"><i style="width:${st.quota ? Math.max(1, (100 * st.used) / st.quota) : 0}%"></i></div>
     <p class="small ${st.persisted ? "" : "muted"}" style="margin:8px 0 0">${st.persisted ? "✓ Maps are stored permanently (the browser won't clear them)." :
       `Maps could be cleared if the phone runs low on space. <button class="btn ghost sm" id="persistBtn">Keep maps safe</button>`}</p>`;
+<<<<<<< HEAD
   await renderCacheBox($("cacheBox"));
+=======
+>>>>>>> origin/main
 }
 
 // ============================================================ packs
@@ -674,9 +786,15 @@ async function refreshWeather() {
   if (!online() || !state.pack) return;
   busy("Updating weather…");
   try {
+<<<<<<< HEAD
     // Open-Meteo directly; the FloodSense server's weather proxy as fallback (if configured)
     const w = await fetchFreshWeather(state.pack.center[0], state.pack.center[1]);
     if (!w) throw new Error("no weather source reachable");
+=======
+    const r = await fetch(`/api/weather?lat=${state.pack.center[0]}&lon=${state.pack.center[1]}`, { cache: "no-store" });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+    const w = await r.json();
+>>>>>>> origin/main
     state.pack.weather = w; state.pack.data_as_of = w.as_of;
     const meta = await db.getMeta(state.pack.id);
     await db.savePack(state.pack, { sha: meta?.sha, bytes: meta?.bytes });
@@ -711,6 +829,7 @@ function wire() {
   $("rainChip").addEventListener("click", () => showTab("rain"));
   $("viewChip").addEventListener("click", () => showTab("rain"));
   $("forceOffline").addEventListener("change", (e) => { state.forceOffline = e.target.checked; updateNetUI(); toast(e.target.checked ? "Offline mode: nothing leaves this device." : "Back online."); });
+<<<<<<< HEAD
   // Android app: optional admin-server address (the app works fully without one)
   if (mobile.isNative()) {
     $("serverRow").hidden = false;
@@ -721,6 +840,8 @@ function wire() {
       refreshCatalog();
     });
   }
+=======
+>>>>>>> origin/main
   window.addEventListener("online", updateNetUI); window.addEventListener("offline", updateNetUI);
   window.addEventListener("resize", () => map.invalidateSize());
 
@@ -740,12 +861,17 @@ function wire() {
     if (b.id === "persistBtn") { toast((await packs.requestPersist()) ? "Maps will be kept permanently." : "The browser declined. Install FloodSense (Add to Home screen) and try again."); renderMaps(); }
     if (b.dataset.b) { state.basemap = b.dataset.b; setSeg("baseSeg", b.dataset.b, "b"); db.setSetting("basemap", state.basemap); applyBasemap(); }
   });
+<<<<<<< HEAD
 
   // maps tab: build any Indian city in the browser
   initMapsBuilder({
     onBuilt: async (id) => { await loadPack(id); renderMaps(); toast("Map built and saved. It works offline now."); },
     getMapCenter: () => { const c = map.getCenter(); return [c.lat, c.lng]; },
   });
+=======
+  $("obRetry").addEventListener("click", prepareNearbyMap);
+  $("obDownload").addEventListener("click", prepareNearbyMap);
+>>>>>>> origin/main
 
   // rain
   $("rainSrc").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setRainSource(b.dataset.src); });
@@ -834,9 +960,14 @@ function wire() {
 async function start() {
   let list = await db.listPacks();
   if (!list.length) {
+<<<<<<< HEAD
     const id = await onboarding();
     if (!id) return;
     list = await db.listPacks();
+=======
+    await onboarding();
+    return;
+>>>>>>> origin/main
   }
   if (!(await db.getSetting("model")) && online()) { try { await packs.syncModel(await packs.fetchCatalog()); } catch { /* offline */ } }
   state.basemap = (await db.getSetting("basemap")) || "light";
@@ -856,5 +987,9 @@ if (window.innerWidth <= 800) document.querySelector(".legend").open = false;
 wire();
 updateNetUI();
 renderPlaces();
+<<<<<<< HEAD
 if (!mobile.isNative() && "serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+=======
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+>>>>>>> origin/main
 start();

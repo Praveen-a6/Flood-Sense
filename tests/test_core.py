@@ -213,6 +213,7 @@ def test_api_catalog_streams_precompressed_pack_and_model():
         assert c.get("/api/build?lat=13&lon=80").status_code in (404, 405)   # no building from the browser
 
 
+<<<<<<< HEAD
 def test_api_overpass_relay(monkeypatch):
     """POST /api/overpass is the browser builder's last resort: it relays one
     Overpass QL query through this server's uplink, retries busy mirrors, and
@@ -260,6 +261,8 @@ def test_api_overpass_relay(monkeypatch):
         assert r.status_code == 502 and "mirror-a" in r.json()["detail"] and "mirror-b" in r.json()["detail"]
 
 
+=======
+>>>>>>> origin/main
 def test_pack_store_index_default_and_delete(tmp_path, monkeypatch):
     from backend import pack_store
     monkeypatch.setattr(pack_store, "PACK_DIR", tmp_path)
@@ -287,6 +290,7 @@ def test_packs_cli_verify_demo_city():
     broken = {"version": 1, "segments": [{"id": 0, "a": 0, "b": 5, "f": [1.0], "name": ""}], "nodes": [[0, 0]], "pois": []}
     probs = packs.verify(broken)
     assert any("old pack format" in p for p in probs) and any("missing junctions" in p for p in probs)
+<<<<<<< HEAD
 
 
 # ------------------------------------------------ browser-side city builder
@@ -306,3 +310,5 @@ def test_browser_city_builder_assets_exist_and_ship_offline():
     count = int(re.search(r"count: (\d+)", cat).group(1))
     assert count >= 1200, "city catalogue too small - regenerate: python tools/make_city_catalog.py"
     assert "GeoNames" in cat, "keep the GeoNames attribution (CC BY 4.0)"
+=======
+>>>>>>> origin/main

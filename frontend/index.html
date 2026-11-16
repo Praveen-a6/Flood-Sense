@@ -161,6 +161,7 @@
           <ul id="deviceMaps" class="list maps"></ul>
         </div>
         <div class="card online-only">
+<<<<<<< HEAD
           <h3>Build a map for any city in India</h3>
           <p class="small muted" style="margin:0 0 8px">Downloaded and built <b>on this device</b> - nothing is prepared on the server. Works offline afterwards.</p>
           <div class="ob-search-row">
@@ -202,6 +203,17 @@
           <h3>Storage</h3>
           <div id="storageBox" class="small"></div>
           <div id="cacheBox" class="small" style="margin-top:8px"></div>
+=======
+          <h3>Download more maps <span class="muted small">(optional)</span></h3>
+          <ul id="serverMaps" class="list maps"></ul>
+          <p class="muted small">New cities are prepared on the FloodSense server with
+            <code>python packs.py build --preset …</code> (see README), then appear here.</p>
+        </div>
+        <p class="offline-only muted small pad">Offline: showing maps saved on this device. Downloads resume when you're back online.</p>
+        <div class="card">
+          <h3>Storage</h3>
+          <div id="storageBox" class="small"></div>
+>>>>>>> origin/main
         </div>
         <div class="card online-only">
           <h3>Background map <span class="muted small">(online, real maps only)</span></h3>
@@ -264,6 +276,7 @@
 
 <!-- ============ FIRST START ============ -->
 <div id="onboard" hidden>
+<<<<<<< HEAD
   <div class="ob-card ob-wide">
     <img src="/icons/icon.svg" alt="" width="52" height="52">
     <h2>Welcome to FloodSense</h2>
@@ -316,6 +329,22 @@
         <button id="obBack" class="btn ghost" hidden>Pick another city</button>
       </div>
     </div>
+=======
+  <div class="ob-card">
+    <img src="/icons/icon.svg" alt="" width="52" height="52">
+    <h2>Welcome to FloodSense</h2>
+    <p>Use your location to create a <b>10 × 10 km nearby flood map</b> from OpenStreetMap and elevation data. FloodSense builds it in your browser and saves it here for <b>offline use</b>.</p>
+    <ol class="ob-steps">
+      <li id="obStep1"><span>AI flood model</span><em></em></li>
+      <li id="obStep2"><span id="obPackName">Nearby map</span><em></em></li>
+    </ol>
+    <div class="progress"><i id="obBar"></i></div>
+    <p id="obStatus" class="small muted"></p>
+    <div id="obChoose" class="ob-choose" hidden>
+      <button id="obDownload" class="btn primary">Use my location and prepare nearby map</button>
+    </div>
+    <button id="obRetry" class="btn primary" hidden>Try again</button>
+>>>>>>> origin/main
   </div>
 </div>
 

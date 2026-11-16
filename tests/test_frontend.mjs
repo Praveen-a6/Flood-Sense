@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 // Tests for the offline browser logic (rain parser, on-device model, routing)
 // and the browser-side city map builder (js/packlib.js + js/cityengine.js).
+=======
+// Tests for the offline browser logic (rain parser, on-device model, routing).
+>>>>>>> origin/main
 // Run:  node tests/test_frontend.mjs      (Node 18+; start the server once first so the demo pack exists)
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -7,6 +11,7 @@ import { parseRain } from "../frontend/js/rain.js";
 import { predictPack, createPredictor, pAtLeast } from "../frontend/js/model.js";
 import { buildSearchIndex, search } from "../frontend/js/places.js";
 import { buildGraph, nearestNode, route, directions } from "../frontend/js/router.js";
+<<<<<<< HEAD
 import {
   Grid, LocalProjection, STATIC_FEATURES, clipPackToPolygon, decodeTerrariumRGBA, parseOSM,
   parseOpenMeteo, pointInPolygon, priorityFlood, sampleDEM, tileXY, verifyPack, analyse,
@@ -17,6 +22,12 @@ import { CITIES, cityPackId, cityRadiusKm, citiesInState, nearestCities, searchC
 const QUEUE = [];
 const test = (name, fn) => QUEUE.push([name, fn]);
 const atest = test;   // async tests run in the same order, awaited, at the bottom
+=======
+import { buildNearbyPack } from "../frontend/js/live_pack.js";
+
+let passed = 0;
+const test = (name, fn) => { fn(); passed++; console.log("  ok -", name); };
+>>>>>>> origin/main
 
 test("rain words -> mm", () => {
   const r = parseRain("poured heavily for 3 hours, then drizzled 2 hours");
@@ -40,6 +51,7 @@ test("dry spell and reservoir", () => {
 });
 test("garbage is rejected", () => assert.equal(parseRain("hello").ok, false));
 
+<<<<<<< HEAD
 // ==================================================== browser city builder
 // These mirror the backend's tests (tests/test_core.py) test by test, so the
 // pack built in the browser stays byte-compatible with `python packs.py build`.
@@ -425,6 +437,8 @@ test("hanging mirrors fast-forward to the relay after one round", async () => {
   } finally { restore(real, realCap); }
 });
 
+=======
+>>>>>>> origin/main
 const packPath = new URL("../data/packs/demo-city.json", import.meta.url);
 const modelPath = new URL("../models/flood_model.json", import.meta.url);
 if (fs.existsSync(packPath) && fs.existsSync(modelPath)) {
@@ -483,6 +497,7 @@ if (fs.existsSync(packPath) && fs.existsSync(modelPath)) {
   console.log("  (skipping model/routing tests: run `python run.py` once to build the demo pack)");
 }
 
+<<<<<<< HEAD
 // ---- run everything in order, stop at the first failure ----
 let passed = 0;
 for (const [name, fn] of QUEUE) {
@@ -495,5 +510,51 @@ for (const [name, fn] of QUEUE) {
     console.error(e);
     process.exit(1);
   }
+=======
+const originalFetch = globalThis.fetch;
+const originalCanvas = globalThis.OffscreenCanvas;
+const originalImageBitmap = globalThis.createImageBitmap;
+const centre = { lat: 13, lon: 80.2 };
+const osmFixture = { elements: [
+  { type: "way", id: 1, tags: { highway: "primary", name: "Cross Road" },
+    geometry: [{ lat: 13, lon: 80.1995 }, centre, { lat: 13, lon: 80.2005 }] },
+  { type: "way", id: 2, tags: { highway: "residential", name: "North Road" },
+    geometry: [{ lat: 12.9995, lon: 80.2 }, centre, { lat: 13.0005, lon: 80.2 }] },
+  { type: "node", id: 3, lat: 13, lon: 80.2001, tags: { place: "town", name: "Test Town" } },
+  { type: "node", id: 4, lat: 13, lon: 80.2002, tags: { amenity: "hospital", name: "Test Hospital" } },
+] };
+try {
+  const rgba = new Uint8ClampedArray(256 * 256 * 4);
+  for (let i = 0; i < rgba.length; i += 4) { rgba[i] = 128; rgba[i + 1] = 128; }
+  globalThis.OffscreenCanvas = class {
+    getContext() { return { drawImage() {}, getImageData() { return { data: rgba }; } }; }
+  };
+  globalThis.createImageBitmap = async () => ({ close() {} });
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes("overpass-api.de") || url.includes("overpass.kumi.systems"))
+      return new Response(JSON.stringify(osmFixture), { status: 200 });
+    if (url.includes("elevation-tiles-prod"))
+      return new Response(new Blob(["mock elevation"]), { status: 200 });
+    if (url.includes("open-meteo.com"))
+      return new Response(JSON.stringify({ current: { time: "2026-01-01T10:00" }, hourly: { time: [], precipitation: [] } }), { status: 200 });
+    throw new Error(`Unexpected fetch: ${url}`);
+  };
+  const livePack = await buildNearbyPack(centre.lat, centre.lon);
+  assert.equal(livePack.kind, "city");
+  assert.equal(livePack.name, "Test Town (nearby map)");
+  assert.ok(livePack.segments.length >= 2);
+  assert.ok(livePack.segments.every((s) => s.f.length === 12 && s.f.every(Number.isFinite)));
+  assert.equal(livePack.pois[0].name, "Test Hospital");
+  assert.equal(livePack.pois[0].lat, centre.lat);
+  passed++;
+  console.log("  ok - build and package a GPS-centred map from direct OSM/elevation data");
+} finally {
+  globalThis.fetch = originalFetch;
+  if (originalCanvas === undefined) delete globalThis.OffscreenCanvas;
+  else globalThis.OffscreenCanvas = originalCanvas;
+  if (originalImageBitmap === undefined) delete globalThis.createImageBitmap;
+  else globalThis.createImageBitmap = originalImageBitmap;
+>>>>>>> origin/main
 }
 console.log(`\n${passed} passed`);

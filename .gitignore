@@ -7,6 +7,9 @@ ml/data/
 models/flood_model.onnx
 data/packs/*
 !data/packs/demo-town.json
+<<<<<<< HEAD
 
 # city-catalogue generator's downloaded dumps
 tools/.cache/
+=======
+>>>>>>> origin/main

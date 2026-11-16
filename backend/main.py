@@ -2,8 +2,13 @@
 
 Run with:  python run.py      (or: uvicorn backend.main:app --reload)
 
+<<<<<<< HEAD
 Map packs are built with the command-line program `python packs.py ...`
 (never from the browser). This server only lists and streams them.
+=======
+Optional server-hosted map packs are built with `python packs.py ...`.
+The first-run GPS map is fetched and built directly in the browser.
+>>>>>>> origin/main
 """
 import json
 import logging
@@ -12,7 +17,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
+<<<<<<< HEAD
 from fastapi.concurrency import run_in_threadpool
+=======
+>>>>>>> origin/main
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -129,6 +137,7 @@ def weather(lat: float, lon: float):
         raise HTTPException(502, f"Weather unavailable: {ex}")
 
 
+<<<<<<< HEAD
 @app.post("/api/overpass")
 async def overpass_relay(request: Request):
     """The browser city builder's last resort: relay one Overpass QL query
@@ -151,6 +160,8 @@ async def overpass_relay(request: Request):
         raise HTTPException(502, f"OpenStreetMap relay failed: {ex}")
 
 
+=======
+>>>>>>> origin/main
 @app.get("/sw.js")
 def service_worker():
     return FileResponse(FRONTEND / "sw.js", media_type="application/javascript", headers={"Cache-Control": "no-cache"})

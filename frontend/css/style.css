@@ -206,7 +206,12 @@ body.navigating #searchBox, body.navigating .legend, body.navigating #mapChips {
 .progress { height: 10px; background: #e3ebee; border-radius: 99px; overflow: hidden; }
 .progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--brand2), #4fc3f7); transition: width .2s; }
 .ob-choose { text-align: left; margin-top: 10px; }
+<<<<<<< HEAD
 .ob-choose button { display: block; width: 100%; text-align: left; margin-top: 6px; }
+=======
+.ob-choose label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 650; }
+.ob-choose button { display: block; width: 100%; text-align: center; margin-top: 8px; }
+>>>>>>> origin/main
 
 /* ---------------- metrics ---------------- */
 .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
@@ -243,6 +248,7 @@ body:not(.offline) .offline-only { display: none !important; }
   .leaflet-bottom.leaflet-right { bottom: auto; top: 0; }
   .leaflet-control-attribution { font-size: 9px; }
 }
+<<<<<<< HEAD
 
 /* ---- first start: city picker + build (any city in India, built on this device) ---- */
 .ob-wide { max-width: 560px; text-align: left; max-height: 92vh; overflow-y: auto; }
@@ -296,3 +302,5 @@ body.native-app #app {
   body.native-app #navBar { margin-top: 0; }
   body.native-app #onboard { padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
 }
+=======
+>>>>>>> origin/main

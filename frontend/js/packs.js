@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 // Map-pack manager on the device: catalogue, downloads with progress + integrity check,
 // model sync, updates, storage. Phones only DOWNLOAD packs; they are built on the server
 // with `python packs.py build ...`.
 import * as db from "./db.js";
 import { apiUrl, hasServer, isNative } from "./mobile.js";
+=======
+// Manager for optional server packs: catalogue, downloads, model sync, updates, and storage.
+// The first-run GPS map is built separately in the browser by live_pack.js.
+import * as db from "./db.js";
+>>>>>>> origin/main
 
 export class DownloadError extends Error {}
 
@@ -40,11 +46,18 @@ async function sha16(bytes) {
 }
 
 export async function fetchCatalog(timeoutMs = 10000) {
+<<<<<<< HEAD
   if (isNative() && !hasServer()) return null;   // the app runs standalone; no admin server configured
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), timeoutMs);
   try {
     const r = await fetch(apiUrl("/api/catalog"), { signal: ctl.signal, cache: "no-store" });
+=======
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), timeoutMs);
+  try {
+    const r = await fetch("/api/catalog", { signal: ctl.signal, cache: "no-store" });
+>>>>>>> origin/main
     if (!r.ok) throw new Error(r.statusText);
     return await r.json();
   } finally { clearTimeout(t); }
@@ -52,7 +65,11 @@ export async function fetchCatalog(timeoutMs = 10000) {
 
 /** Download, verify and store one pack. onProgress(fraction 0..1, text). */
 export async function downloadPack(id, onProgress) {
+<<<<<<< HEAD
   const { bytes, sha } = await fetchWithProgress(apiUrl(`/api/packs/${encodeURIComponent(id)}`), (got, total) =>
+=======
+  const { bytes, sha } = await fetchWithProgress(`/api/packs/${encodeURIComponent(id)}`, (got, total) =>
+>>>>>>> origin/main
     onProgress?.(total ? Math.min(1, got / total) : 0, `${mb(got)}${total ? ` of ${mb(total)}` : ""}`));
   onProgress?.(1, "checking…");
   if (sha) {
@@ -78,8 +95,13 @@ export async function syncModel(catalog) {
   const have = await db.getSetting("modelVersion");
   if (!want || want === have) return false;
   const [m, metrics] = await Promise.all([
+<<<<<<< HEAD
     fetch(apiUrl("/api/model"), { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)),
     fetch(apiUrl("/api/metrics"), { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)),
+=======
+    fetch("/api/model", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)),
+    fetch("/api/metrics", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)),
+>>>>>>> origin/main
   ]);
   if (!m) return false;
   await db.setSetting("model", m);
