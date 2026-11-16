@@ -14,7 +14,7 @@
 
 ---
 
-## ⚡ The 30-second pitch
+## ⚡ The pitch
 
 When it floods, the **shortest road is often the deadliest one**: it dips through an underpass or a low-lying colony. Navigation apps show traffic, not water depth. And **mobile data is the first thing to fail** in heavy rain.
 
