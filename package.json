@@ -1,0 +1,22 @@
+{
+  "name": "floodsense",
+  "version": "1.0.0",
+  "description": "Safe routes through flooded streets, even when the network is down. Offline-first flood prediction + navigation. Web app + Android app (Capacitor).",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/test_frontend.mjs",
+    "cap:sync": "cap sync android",
+    "cap:open": "cap open android",
+    "apk:debug": "cap sync android && cd android && ./gradlew assembleDebug",
+    "apk:release": "cap sync android && cd android && ./gradlew assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/geolocation": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}

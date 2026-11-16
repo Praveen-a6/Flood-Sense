@@ -1,0 +1,12 @@
+{
+  "appId": "com.floodsense.app",
+  "appName": "FloodSense",
+  "webDir": "frontend",
+  "android": {
+    "allowMixedContent": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

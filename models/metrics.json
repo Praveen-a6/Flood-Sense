@@ -1,0 +1,63 @@
+{
+  "holdout": "Demo Town (seed 7), never used in training, 40 rain scenarios",
+  "rows": 102680,
+  "accuracy": 0.9242,
+  "macro_f1": 0.7932,
+  "dangerous_roads_missed_pct": 15.16,
+  "missed_at_routing_threshold_pct": 9.98,
+  "dry_roads_wrongly_blocked_pct": 0.0,
+  "confusion_matrix": {
+    "rows=true, cols=pred": [
+      "Dry (<5 cm)",
+      "Shallow (5-15 cm)",
+      "Deep (15-30 cm)",
+      "Impassable (>30 cm)"
+    ],
+    "matrix": [
+      [
+        78138,
+        1684,
+        4,
+        0
+      ],
+      [
+        1958,
+        9943,
+        995,
+        11
+      ],
+      [
+        42,
+        1422,
+        3562,
+        681
+      ],
+      [
+        4,
+        40,
+        940,
+        3256
+      ]
+    ]
+  },
+  "feature_importance": {
+    "rain_24h": 1087961.7,
+    "hand_m": 427300.5,
+    "rain_72h": 173022.1,
+    "rain_3h": 152012.0,
+    "dist_water_m": 144842.9,
+    "depression_m": 122189.9,
+    "impervious": 85799.8,
+    "bridge": 68504.6,
+    "rain_fc_3h": 46376.3,
+    "log_flow_acc": 35784.0,
+    "reservoir_release": 29218.8,
+    "hotspot_100m": 27965.1,
+    "rel_elev_300m": 25668.8,
+    "rain_1h": 17976.8,
+    "elev_m": 13166.1,
+    "road_code": 10311.9,
+    "slope_deg": 7211.6,
+    "underpass": 4378.8
+  }
+}

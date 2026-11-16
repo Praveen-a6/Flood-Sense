@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FloodSense</string>
+    <string name="title_activity_main">FloodSense</string>
+    <string name="package_name">com.floodsense.app</string>
+    <string name="custom_url_scheme">com.floodsense.app</string>
+</resources>

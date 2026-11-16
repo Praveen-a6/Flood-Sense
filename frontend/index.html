@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FloodSense · flood-aware navigation</title>
+  <meta name="description" content="Find a safe route through flooded streets, even offline.">
+  <meta name="theme-color" content="#0b4f6c">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="app">
+  <!-- ============ SIDEBAR (bottom sheet on phones) ============ -->
+  <aside id="panel" class="sheet-mid">
+    <button id="sheetHandle" class="sheet-handle" aria-label="Expand or collapse panel"><span></span></button>
+    <header class="brand">
+      <img src="/icons/icon.svg" alt="" width="36" height="36">
+      <div class="brand-txt">
+        <h1>FloodSense</h1>
+        <button id="currentMap" class="map-chip" title="Change map">📍 <span id="currentMapName">No map</span> ▾</button>
+      </div>
+      <div class="brand-right">
+        <span id="netPill" class="pill">…</span>
+        <label class="switch" title="Pretend there is no internet (for the demo)"><input type="checkbox" id="forceOffline"><span>Offline</span></label>
+      </div>
+    </header>
+
+    <nav class="tabbar" role="tablist">
+      <button data-tab="route" class="active" role="tab"><i>🧭</i>Route</button>
+      <button data-tab="rain" role="tab"><i>🌧</i>Rain</button>
+      <button data-tab="places" role="tab"><i>★</i>Places</button>
+      <button data-tab="maps" role="tab"><i>🗺</i>Maps<b id="mapsBadge" class="badge" hidden>!</b></button>
+      <button data-tab="model" role="tab"><i>📊</i>Model</button>
+    </nav>
+
+    <div class="tabs-body">
+      <!-- ---------------- ROUTE ---------------- -->
+      <section id="tab-route" class="tab-pane active">
+        <div class="trip">
+          <div class="trip-row">
+            <span class="dot a">A</span>
+            <div class="field"><input id="fromInput" placeholder="Choose start…" autocomplete="off"><ul class="dd" id="fromDD" hidden></ul></div>
+            <button id="useGps" class="icon-btn" title="Use my GPS location">⌖</button>
+          </div>
+          <div class="trip-row">
+            <span class="dot b">B</span>
+            <div class="field"><input id="toInput" placeholder="Choose destination…" autocomplete="off"><ul class="dd" id="toDD" hidden></ul></div>
+            <button id="swap" class="icon-btn" title="Swap start and destination">⇅</button>
+          </div>
+          <div class="pick-row">
+            <button id="pickFrom" class="link">Pick start on map</button>
+            <button id="pickTo" class="link">Pick destination on map</button>
+          </div>
+          <div id="quickPlaces" class="quick"></div>
+          <div class="modes" id="modes" role="radiogroup" aria-label="Travelling as">
+            <button data-mode="walk_child" class="active" role="radio"><i>🚶</i><span>Walking with child</span></button>
+            <button data-mode="two_wheeler" role="radio"><i>🛵</i><span>Two-wheeler</span></button>
+            <button data-mode="car" role="radio"><i>🚑</i><span>Car / ambulance</span></button>
+          </div>
+          <p id="modeNote" class="muted small center"></p>
+          <div class="row">
+            <button id="goBtn" class="btn primary grow">Find safe route</button>
+            <button id="hospitalBtn" class="btn danger">🏥 Nearest hospital</button>
+          </div>
+          <button id="demoTrip" class="btn soft full" hidden>▶ Load demo scenario (heavy rain → hospital)</button>
+        </div>
+
+        <div id="routeCard" class="card" hidden>
+          <div class="seg" id="focusSeg" role="tablist" aria-label="Highlight route">
+            <button data-f="both" class="active">Both</button>
+            <button data-f="safe">Safe route</button>
+            <button data-f="shortest">Shortest path</button>
+          </div>
+          <div id="routeSummary"></div>
+          <div class="row">
+            <button id="startNav" class="btn primary grow">▶ Start navigation</button>
+            <button id="simNav" class="btn ghost" title="Drive along the route (for demos on a laptop)">Simulate</button>
+          </div>
+          <div class="row wrap">
+            <label class="check small"><input type="checkbox" id="voiceOn" checked> Voice</label>
+            <button id="speakBtn" class="btn ghost sm">🔊 Read aloud</button>
+            <button id="saveDest" class="btn ghost sm">★ Save destination</button>
+          </div>
+          <ol id="steps" class="steps"></ol>
+        </div>
+      </section>
+
+      <!-- ---------------- RAIN ---------------- -->
+      <section id="tab-rain" class="tab-pane">
+        <div class="card rain-now">
+          <div class="rain-big"><b id="rainBig">–</b><span id="rainBigSub" class="muted small"></span></div>
+          <div class="seg" id="rainSrc">
+            <button data-src="weather" class="active">Weather data</button>
+            <button data-src="manual">Tell us the rain</button>
+          </div>
+          <div id="srcWeather"><p id="weatherRainLine" class="small"></p></div>
+          <div id="srcManual" hidden>
+            <textarea id="rainText" rows="2" placeholder="e.g. poured heavily for 3 hours, then drizzled 1 hour · 12 cm in 2 days · கனமழை 3 மணி நேரம்"></textarea>
+            <div class="chips">
+              <button class="chip" data-q="drizzle for 2 hours">Drizzle 2 h</button>
+              <button class="chip" data-q="moderate rain for 4 hours">Moderate 4 h</button>
+              <button class="chip" data-q="poured heavily for 3 hours">Heavy 3 h</button>
+              <button class="chip" data-q="very heavy rain for 6 hours and still raining">Very heavy 6 h</button>
+              <button class="chip" data-q="20 cm in the past few days, heavy rain 3 hours">20 cm / 3 days</button>
+            </div>
+            <button id="applyRain" class="btn primary full">Update flood map</button>
+            <p id="rainSummary" class="small"></p>
+            <ul id="rainNotes" class="notes"></ul>
+          </div>
+          <label class="check small"><input type="checkbox" id="reservoir"> Upstream dam / lake is releasing water</label>
+        </div>
+
+        <div class="card">
+          <h3>Flood view</h3>
+          <div class="seg" id="viewSeg">
+            <button data-r="1" class="active">3 × 3 km</button>
+            <button data-r="2">5 × 5 km</button>
+            <button data-r="all">Full city</button>
+          </div>
+          <p id="viewStats" class="small muted"></p>
+          <div class="row wrap">
+            <button id="viewHere" class="btn ghost sm">Centre on map view</button>
+            <button id="viewGps" class="btn ghost sm">Centre on my GPS</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Weather <button id="refreshWeather" class="btn ghost sm online-only">↻ Refresh</button></h3>
+          <div id="weatherBox" class="muted small">No weather data in this map.</div>
+        </div>
+      </section>
+
+      <!-- ---------------- PLACES ---------------- -->
+      <section id="tab-places" class="tab-pane">
+        <div class="card">
+          <h3>Saved places</h3>
+          <ul id="placesList" class="list"></ul>
+          <div id="saveForm" class="saveform" hidden>
+            <input id="saveName" type="text" placeholder="Name, e.g. Amma's house" maxlength="60">
+            <div class="seg" id="saveKind">
+              <button data-k="home">🏠 Home</button><button data-k="work">💼 Work</button><button data-k="fav" class="active">★ Favourite</button>
+            </div>
+            <div class="row"><button id="saveOk" class="btn primary grow">Save</button><button id="saveCancel" class="btn ghost">Cancel</button></div>
+            <p id="saveWhere" class="muted small"></p>
+          </div>
+          <div class="row wrap">
+            <button id="saveGps" class="btn ghost sm">⌖ Save my location</button>
+            <button id="saveMap" class="btn ghost sm">📍 Save a point on the map</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------------- MAPS ---------------- -->
+      <section id="tab-maps" class="tab-pane">
+        <div class="card" id="currentMapCard"></div>
+        <div class="card">
+          <h3>On this device</h3>
+          <ul id="deviceMaps" class="list maps"></ul>
+        </div>
+        <div class="card online-only">
+          <h3>Build a map for any city in India</h3>
+          <p class="small muted" style="margin:0 0 8px">Downloaded and built <b>on this device</b> - nothing is prepared on the server. Works offline afterwards.</p>
+          <div class="ob-search-row">
+            <input id="mapCitySearch" type="search" placeholder="Search any city or town…" autocomplete="off">
+            <button id="mapNearMe" class="btn ghost" title="Cities nearest to my GPS location">⌖ Near me</button>
+          </div>
+          <ul id="mapCityResults" class="city-list"></ul>
+          <div class="ob-state-row">
+            <label class="small muted" for="mapState">or browse by state:</label>
+            <select id="mapState"></select>
+          </div>
+          <div id="mapBuildBox"></div>
+          <details class="area-details">
+            <summary class="small muted">Custom area instead of a whole city</summary>
+            <div class="row wrap" style="margin-top:8px">
+              <input id="areaName" placeholder="Name (e.g. My neighbourhood)" style="min-width:150px">
+              <div class="seg">
+                <button id="areaSrcGps" class="active">⌖ my GPS</button>
+                <button id="areaSrcMap">map centre</button>
+              </div>
+              <label class="small">radius
+                <select id="areaRadius"><option>1</option><option>2</option><option selected>3</option><option>5</option><option>8</option><option>12</option><option>20</option><option>30</option></select> km
+              </label>
+              <button id="areaBuild" class="btn sm">Build area map</button>
+            </div>
+          </details>
+        </div>
+        <div class="card online-only" id="serverPacksCard">
+          <h3>Server-prepared packs <span class="muted small">(advanced, optional)</span></h3>
+          <div class="server-row" id="serverRow" hidden>
+            <input id="serverUrl" type="url" placeholder="http://192.168.1.20:8000" inputmode="url" autocomplete="off" aria-label="FloodSense server address">
+            <button id="serverSave" class="btn ghost sm">Save</button>
+          </div>
+          <ul id="serverMaps" class="list maps"></ul>
+          <p class="muted small">Not needed: every Indian city can be built above. A server admin can optionally pre-build packs with <code>python packs.py build --preset …</code>; they appear here.</p>
+        </div>
+        <p class="offline-only muted small pad">Offline: maps saved on this device work normally. Building a new map resumes when you're back online.</p>
+        <div class="card">
+          <h3>Storage</h3>
+          <div id="storageBox" class="small"></div>
+          <div id="cacheBox" class="small" style="margin-top:8px"></div>
+        </div>
+        <div class="card online-only">
+          <h3>Background map <span class="muted small">(online, real maps only)</span></h3>
+          <div class="seg" id="baseSeg">
+            <button data-b="light" class="active">Clean</button>
+            <button data-b="osm">OpenStreetMap</button>
+            <button data-b="none">None</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------------- MODEL ---------------- -->
+      <section id="tab-model" class="tab-pane">
+        <div class="card"><h3>Model performance</h3><div id="metricsBox" class="small muted">…</div></div>
+      </section>
+    </div>
+
+    <footer class="muted small">FloodSense gives risk estimates, not guarantees. Follow official warnings and never enter water you can't see the bottom of.</footer>
+  </aside>
+
+  <!-- ============ MAP ============ -->
+  <main id="mapWrap">
+    <div id="map"></div>
+    <div id="searchBox">
+      <input id="searchInput" type="search" placeholder="Search streets, shops, areas, saved places…" autocomplete="off" aria-label="Search">
+      <ul id="searchResults" class="dd" hidden></ul>
+    </div>
+    <div id="mapChips">
+      <button id="rainChip" class="mchip" title="Rain used for the flood map">🌧 <span>–</span></button>
+      <button id="viewChip" class="mchip" title="Flood view size">▦ <span>3×3 km</span></button>
+    </div>
+    <div id="pickHint" class="map-hint" hidden></div>
+    <div id="busy" class="map-busy" hidden><i></i><span>Working…</span></div>
+
+    <div id="navBanner" hidden>
+      <div class="turn" id="navTurn"></div>
+      <div class="txt"><div id="navDist" class="dist"></div><div id="navInstr" class="instr"></div><div id="navThen" class="then"></div></div>
+    </div>
+    <div id="navBar" hidden>
+      <div><b id="navEta"></b><span id="navRemain"></span></div>
+      <button id="navRecenter" class="btn ghost sm" hidden>Re-centre</button>
+      <button id="navStop" class="btn danger sm">Stop</button>
+    </div>
+
+    <details class="legend" open>
+      <summary>Legend</summary>
+      <div class="lg">
+        <div><i style="background:var(--c0)"></i>Dry</div>
+        <div><i style="background:var(--c1)"></i>5-15 cm</div>
+        <div><i style="background:var(--c2)"></i>15-30 cm</div>
+        <div><i style="background:var(--c3)"></i>&gt;30 cm</div>
+        <div><i class="line safe"></i>Safe route</div>
+        <div><i class="line short"></i>Shortest path</div>
+        <div><i style="background:#c3ccd0"></i>Not analysed</div>
+        <div><i class="line view"></i>Flood view</div>
+      </div>
+    </details>
+  </main>
+</div>
+
+<!-- ============ FIRST START ============ -->
+<div id="onboard" hidden>
+  <div class="ob-card ob-wide">
+    <img src="/icons/icon.svg" alt="" width="52" height="52">
+    <h2>Welcome to FloodSense</h2>
+    <p>Choose your city. FloodSense then downloads <b>your whole city once</b> - roads, street
+      and shop names, elevation and weather - computes the flood terrain on this device, and
+      saves it for offline use. Every city and town in India works.</p>
+
+    <div id="obPick">
+      <div class="ob-search-row">
+        <input id="obCitySearch" type="search" placeholder="Search any city or town in India…" autocomplete="off">
+        <button id="obNearMe" class="btn ghost" title="Cities nearest to my GPS location">⌖ Near me</button>
+      </div>
+      <ul id="obCityResults" class="city-list"></ul>
+      <div class="ob-state-row">
+        <label class="small muted" for="obState">or browse by state:</label>
+        <select id="obState"></select>
+      </div>
+      <div class="ob-alt">
+        <button id="obDemo" class="btn ghost sm">▶ Or load the synthetic Demo City (works without internet)</button>
+      </div>
+      <p id="obNetNote" class="small muted"></p>
+    </div>
+
+    <div id="obPlan" hidden>
+      <h3 id="obPlanName"></h3>
+      <p id="obPlanDetail" class="small"></p>
+      <p id="obPlanWarn" class="small" style="color:#b3541e" hidden></p>
+      <div class="row">
+        <button id="obBuildBtn" class="btn primary grow">⬇ Download my city map</button>
+        <button id="obPlanBack" class="btn ghost">Back</button>
+      </div>
+    </div>
+
+    <div id="obBuild" hidden>
+      <h3 id="obBuildName"></h3>
+      <ol class="ob-steps">
+        <li id="obStep1"><span>AI flood model</span><em></em></li>
+        <li id="obStep2"><span>City boundary</span><em></em></li>
+        <li id="obStep3"><span>OpenStreetMap roads &amp; names</span><em></em></li>
+        <li id="obStep4"><span>Elevation tiles</span><em></em></li>
+        <li id="obStep5"><span>Flood terrain &amp; segments</span><em></em></li>
+        <li id="obStep6"><span>Saving on this device</span><em></em></li>
+      </ol>
+      <div class="progress"><i id="obBar"></i></div>
+      <p id="obStatus" class="small muted"></p>
+      <ul id="obNotes" class="notes"></ul>
+      <div class="row">
+        <button id="obCancel" class="btn ghost">Cancel</button>
+        <button id="obRetry" class="btn primary" hidden>Try again</button>
+        <button id="obBack" class="btn ghost" hidden>Pick another city</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="/vendor/leaflet/leaflet.js"></script>
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
